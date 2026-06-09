@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Position Sizing & Risk Management</title>
+<meta name="theme-color" content="#0ea5e9">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Position Sizing">
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Position%20Sizing%20%26%20Risk%20Management%22%2C%22short_name%22%3A%22PosSizing%22%2C%22description%22%3A%22%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%84%E0%B8%B3%E0%B8%99%E0%B8%A7%E0%B8%93%E0%B8%82%E0%B8%99%E0%B8%B2%E0%B8%94%20Position%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23e8edf2%22%2C%22theme_color%22%3A%22%230ea5e9%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA1BMVEXuqiQjCJDgAAAAI0lEQVR42u3BMQEAAADCoPVP7WsIoAAAAAAAAAAAAAAAeAMBxAABVADh4QAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22128x128%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',system-ui,sans-serif;background:#e8edf2;color:#1a1a1a;min-height:100vh}
+a{text-decoration:none}
+
+/* header */
+.top-header{background:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dde3ea}
+.top-header-left{display:flex;align-items:center;gap:10px}
+.logo-circle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#38bdf8,#0ea5e9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
+.top-header h1{font-size:14px;font-weight:700;color:#111;line-height:1.3}
+.top-header p{font-size:11px;color:#888;margin-top:1px}
+.btn-mode{background:#f1f5f9;border:1px solid #dde3ea;border-radius:6px;padding:6px 14px;font-size:12px;color:#444;cursor:pointer}
+.btn-mode:hover{background:#e2e8f0}
+
+/* layout */
+.main{max-width:1100px;margin:0 auto;padding:20px 16px;display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+@media(max-width:768px){.main{grid-template-columns:1fr}}
+
+/* cards */
+.card{background:#fff;border-radius:12px;border:1px solid #dde3ea;padding:20px}
+.card-title{font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f4f8}
+
+/* form layout */
+.row{display:flex;gap:12px;margin-bottom:12px;align-items:flex-end}
+.row>.field{flex:1}
+.field label{display:block;font-size:12px;color:#555;margin-bottom:5px;font-weight:500}
+.field input,.field select{width:100%;height:38px;font-size:13px;padding:0 10px;border:1px solid #d1d9e0;border-radius:7px;background:#f9fafc;color:#1a1a1a;outline:none;transition:border-color .15s,background .15s}
+.field input:focus,.field select:focus{border-color:#38bdf8;background:#fff}
+.field input::placeholder{color:#bbb}
+.hint{font-size:11px;color:#888;margin-top:4px;line-height:1.4}
+
+/* pair search */
+.pair-wrap{position:relative}
+.pair-dropdown{position:absolute;top:42px;left:0;right:0;background:#fff;border:1px solid #d1d9e0;border-radius:8px;z-index:999;max-height:230px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.10);display:none}
+.pair-dropdown.open{display:block}
+.pair-group-label{font-size:10px;font-weight:700;color:#aaa;padding:8px 12px 3px;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #f5f5f5;background:#fafafa}
+.pair-group-label:first-child{border-top:none}
+.pair-opt{padding:8px 12px;font-size:13px;cursor:pointer;color:#1a1a1a;display:flex;align-items:center;justify-content:space-between}
+.pair-opt:hover,.pair-opt.kactive{background:#f0f9ff;color:#0ea5e9}
+.hot-badge{font-size:10px;background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:600}
+.no-result{font-size:12px;color:#aaa;padding:12px;text-align:center}
+
+/* leverage */
+.lev-row{margin-bottom:12px}
+.lev-row label{font-size:12px;color:#555;font-weight:500;display:block;margin-bottom:6px}
+.lev-inner{display:flex;align-items:center;gap:10px}
+.lev-inner input[type=range]{flex:1;accent-color:#0ea5e9;height:4px}
+.lev-val{width:52px;height:38px;font-size:13px;font-weight:700;text-align:center;border:1px solid #d1d9e0;border-radius:7px;background:#f9fafc;color:#0ea5e9}
+
+/* 3-col row for TP/SL/fee */
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+
+/* result section */
+.result-section{margin-top:4px}
+.result-divider{height:1px;background:#f0f4f8;margin:14px 0}
+.result-row{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:0}
+.result-cell{padding:10px 0}
+.result-cell .rlabel{font-size:12px;color:#666;margin-bottom:3px}
+.result-cell .rval{font-size:20px;font-weight:700;color:#111;line-height:1.1}
+.result-cell .rval.green{color:#16a34a}
+.result-cell .rval.red{color:#dc2626}
+.result-cell .rval.orange{color:#ea580c}
+.result-cell .rsub{font-size:11px;color:#aaa;margin-top:2px}
+.result-cell .rformula{font-size:11px;color:#aaa;margin-top:2px}
+
+/* action buttons */
+.btn-row{display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #f0f4f8}
+.btn-calc{flex:1;height:40px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #d1d9e0;background:#f1f5f9;color:#444;transition:.15s}
+.btn-calc:hover{background:#e2e8f0}
+.btn-save{flex:2;height:40px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:#0ea5e9;color:#fff;transition:.15s}
+.btn-save:hover{background:#0284c7}
+
+/* right panel */
+.summary-nums{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.snum{background:#f8fafc;border-radius:8px;padding:12px}
+.snum .sl{font-size:11px;color:#888;margin-bottom:4px}
+.snum .sv{font-size:22px;font-weight:700;color:#111}
+.snum .sv.green{color:#16a34a}
+.graph-area{background:#f8fafc;border-radius:8px;height:120px;display:flex;align-items:flex-end;justify-content:center;padding:10px;gap:2px;position:relative;overflow:hidden;margin-bottom:10px}
+.graph-note{font-size:11px;color:#aaa;line-height:1.5;padding:8px 0}
+
+/* trade table section */
+.trades-wrap{margin-top:16px}
+.trades-wrap .card-title{margin-bottom:0;border-bottom:none;padding-bottom:0}
+.ttable-scroll{overflow-x:auto;margin-top:12px}
+.ttable{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+.ttable thead tr{border-bottom:2px solid #f0f4f8}
+.ttable th{color:#888;font-weight:600;padding:8px 8px;text-align:left;white-space:nowrap;font-size:11px}
+.ttable td{padding:10px 8px;border-bottom:1px solid #f5f7fa;color:#1a1a1a;vertical-align:middle}
+.ttable tbody tr:hover{background:#fafcff}
+.sbadge{display:inline-block;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700}
+.sp{background:#fef3c7;color:#b45309}
+.sw{background:#dcfce7;color:#16a34a}
+.sl2{background:#fee2e2;color:#dc2626}
+.abtn{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;border:none;margin-right:3px}
+.abtn.aw{background:#16a34a;color:#fff}
+.abtn.al{background:#dc2626;color:#fff}
+.abtn.ad{background:#f1f5f9;color:#888}
+.empty-row{text-align:center;color:#bbb;font-size:13px;padding:24px 0}
+
+/* footer */
+.footer{text-align:center;font-size:11px;color:#bbb;padding:16px 0 24px}
+.footer span{color:#0ea5e9;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="top-header">
+  <div class="top-header-left">
+    <div class="logo-circle">PS</div>
+    <div>
+      <h1>📊 Position Sizing &amp; Risk Management</h1>
+      <p>🧮 คำนวณขนาดสัญญา · ⚖️ ประเมินความเสี่ยง · 📝 บันทึกการเทรด</p>
+    </div>
+  </div>
+  <button class="btn-mode" onclick="toggleMode()">โหมดสว่าง</button>
+</div>
+
+<div class="main">
+  <!-- LEFT: form -->
+  <div>
+    <div class="card">
+      <div class="card-title">🗂️ ข้อมูลสำหรับคำนวณ (Risk Management)</div>
+
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>💱 คู่สินทรัพย์ที่เทรด</label>
+          <div class="pair-wrap">
+            <input type="text" id="pair" placeholder="เช่น BTC/USDT" value="" autocomplete="off"
+              oninput="filterPairs()" onfocus="openDD()" onkeydown="pairKey(event)">
+            <div class="pair-dropdown" id="pairDD"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>📅 วันที่</label>
+          <input type="date" id="tradeDate">
+        </div>
+        <div class="field">
+          <label>🕐 เวลา</label>
+          <input type="time" id="tradeTime">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" style="flex:2">
+          <label>💰 จำนวนเงินทุนทั้งหมด (พอร์ตปัจจุบัน)</label>
+          <input type="number" id="capital" placeholder="เช่น 100000" value="0">
+          <div class="hint">ใช้เป็นฐานคำนวณเงินที่ยอมเสียต่อหนึ่งออเดอร์</div>
+        </div>
+        <div class="field">
+          <label>⚠️ Risk per Trade</label>
+          <select id="riskPct">
+            <option value="1">ต่ำ 1%</option>
+            <option value="2">ต่ำกลาง 2%</option>
+            <option value="3" selected>กลาง 3%</option>
+            <option value="5">สูง 5%</option>
+          </select>
+          <div class="hint">เปอร์เซ็นต์เงินทุนที่ยอมรับความเสียในออเดอร์นี้</div>
+        </div>
+      </div>
+
+      <div class="lev-row">
+        <label>⚡ เลเวอเรจ (1x–300x)</label>
+        <div class="lev-inner">
+          <input type="range" min="1" max="300" value="10" id="levSlider" step="1"
+            oninput="document.getElementById('levVal').value=this.value;calc()">
+          <input type="number" id="levVal" class="lev-val" value="10" min="1" max="300"
+            oninput="document.getElementById('levSlider').value=this.value;calc()">
+        </div>
+      </div>
+
+      <div class="row3">
+        <div class="field">
+          <label>🎯 จุดทำกำไร (TP%) จากกราฟ</label>
+          <input type="number" id="tp" placeholder="เช่น 4" step="0.01">
+        </div>
+        <div class="field">
+          <label>🛑 จุดตัดขาดทุน (SL%) จากกราฟ</label>
+          <input type="number" id="sl" placeholder="เช่น 1.5" step="0.01">
+        </div>
+        <div class="field">
+          <label>🏦 ค่าธรรมเนียมกระดาน (%)</label>
+          <input type="number" id="fee" placeholder="0.02" value="0.02" step="0.001">
+          <div class="hint">โดยทั่วไปคิดทั้งเข้าและออก (รวม ~2 เท่าของอัตรานี้)</div>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div class="result-section">
+        <div class="result-divider"></div>
+        <div class="result-row">
+          <div class="result-cell">
+            <div class="rlabel">⚖️ Risk / Reward (RR)</div>
+            <div class="rval" id="r-rr">—</div>
+          </div>
+          <div class="result-cell">
+            <div class="rlabel">💸 เงินที่ยอมเสียในออเดอร์นี้ (รวมค่าธรรมเนียม)</div>
+            <div class="rval orange" id="r-risk-amt">0</div>
+          </div>
+        </div>
+
+        <div class="result-divider"></div>
+        <div class="result-row">
+          <div class="result-cell">
+            <div class="rlabel">✅ กำไรคาดหมายหลังหักค่าธรรมเนียม</div>
+            <div class="rval green" id="r-profit">0</div>
+            <div class="rsub">TP (ไม่หักค่าธรรมเนียม): <span id="r-profit-raw">0</span></div>
+          </div>
+          <div class="result-cell">
+            <div class="rlabel">❌ ขาดทุนคาดหมายหลังหักค่าธรรมเนียม</div>
+            <div class="rval red" id="r-loss">0</div>
+            <div class="rsub">SL (ไม่หักค่าธรรมเนียม): <span id="r-loss-raw">0</span></div>
+          </div>
+        </div>
+
+        <div class="result-divider"></div>
+        <div class="result-row">
+          <div class="result-cell">
+            <div class="rlabel">🏧 มาร์จินที่ต้องใช้ (โดยประมาณ)</div>
+            <div class="rval" id="r-margin">0</div>
+            <div class="rformula">= Position ÷ Leverage</div>
+          </div>
+          <div class="result-cell">
+            <div class="rlabel">📐 ขนาด Position ที่แนะนำ</div>
+            <div class="rval" id="r-pos">—</div>
+            <div class="rformula">= (Capital × Risk%) ÷ SL%</div>
+          </div>
+        </div>
+
+        <div class="result-divider"></div>
+        <div class="result-row">
+          <div class="result-cell">
+            <div class="rlabel">🎯 TP ที่ต้องตั้ง (%)</div>
+            <div class="rval green" id="r-tp-set">0.00%</div>
+          </div>
+          <div class="result-cell">
+            <div class="rlabel">🛑 SL ที่ต้องตั้ง (%)</div>
+            <div class="rval red" id="r-sl-set">0.00%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-calc" onclick="resetForm()">รีเซ็ต</button>
+        <button class="btn-save" onclick="saveTrade()">บันทึกการเทรด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: summary -->
+  <div>
+    <div class="card">
+      <div class="card-title">📈 สรุปพอร์ตโดยย่อ</div>
+      <div class="summary-nums">
+        <div class="snum">
+          <div class="sl">💹 กำไร/ขาดทุนสะสม (ปิดออเดอร์)</div>
+          <div class="sv" id="s-pnl">0</div>
+        </div>
+        <div class="snum">
+          <div class="sl">📋 จำนวนรายการที่บันทึก</div>
+          <div class="sv" id="s-count">0</div>
+        </div>
+      </div>
+      <div class="graph-area" id="graphArea">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:11px;color:#ccc">กราฟ P&amp;L สะสม</span>
+        </div>
+      </div>
+      <div class="graph-note">
+        หมายเหตุ: เลเวอเรจจะไม่เปลี่ยนมูลค่ากำไร/ขาดทุน แต่มีผลต่อมาร์จินที่ต้องใช้<br>
+        กราฟแสดงค่า P&amp;L สะสมตามลำดับของการบันทึก (ออเดอร์ที่ยังค้างจะนับเป็น 0 จนกว่าจะปิดผลลัพธ์)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- trade log -->
+<div style="max-width:1100px;margin:0 auto;padding:0 16px 16px">
+  <div class="card trades-wrap">
+    <div class="card-title">📝 บันทึกการเทรด</div>
+    <div class="ttable-scroll">
+      <table class="ttable" id="tradeTable">
+        <thead>
+          <tr>
+            <th>💱 คู่</th><th>📅 วันที่</th><th>🕐 เวลา</th><th>⚡ Lev</th><th>📐 Position</th>
+            <th>🎯 TP%</th><th>🛑 SL%</th><th>🏦 Fee%</th>
+            <th>✅ คาดหมายกำไร</th><th>❌ คาดหมายขาดทุน</th>
+            <th>🔖 สถานะ</th><th>💰 ผลลัพธ์</th><th>⚙️ การจัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="tradeBody">
+          <tr><td colspan="13" class="empty-row">ยังไม่มีรายการเทรด</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">เครื่องมือเพื่อการศึกษา ไม่ใช่คำแนะนำในการลงทุน</div>
+
+<script>
+const PAIRS={
+  'แนะนำ':['ETH/USDT','XAU/USDT','XAG/USDT'],
+  'Crypto (USDT)':['BTC/USDT','BNB/USDT','SOL/USDT','XRP/USDT','ADA/USDT','DOGE/USDT','AVAX/USDT','DOT/USDT','LINK/USDT','MATIC/USDT','LTC/USDT','TRX/USDT','ATOM/USDT','UNI/USDT','XLM/USDT','NEAR/USDT','APT/USDT','ARB/USDT','OP/USDT','SUI/USDT','INJ/USDT','WIF/USDT','PEPE/USDT','SHIB/USDT'],
+  'Crypto (BTC)':['ETH/BTC','BNB/BTC','SOL/BTC','XRP/BTC','ADA/BTC','LTC/BTC','LINK/BTC','DOT/BTC'],
+  'Forex':['EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD','EUR/GBP','EUR/JPY','GBP/JPY'],
+  'Commodities':['XAU/USDT','XAG/USDT','OIL/USD','NATGAS/USD'],
+  'Indices':['SPX500','NAS100','US30','UK100','GER40','JPN225']
+};
+const HOT=['ETH/USDT','XAU/USDT','XAG/USDT'];
+let pidx=-1,flist=[];
+
+function buildDD(q){
+  const dd=document.getElementById('pairDD');
+  flist=[];let html='';
+  for(const[g,items]of Object.entries(PAIRS)){
+    const m=items.filter(p=>p.toLowerCase().includes((q||'').toLowerCase()));
+    if(!m.length)continue;
+    html+=`<div class="pair-group-label">${g}</div>`;
+    m.forEach(p=>{
+      const h=HOT.includes(p)?'<span class="hot-badge">🔥 Hot</span>':'';
+      html+=`<div class="pair-opt" data-v="${p}" onmousedown="selPair('${p}')">${p}${h}</div>`;
+      flist.push(p);
+    });
+  }
+  if(!flist.length)html='<div class="no-result">ไม่พบ — พิมพ์ชื่อเองได้</div>';
+  dd.innerHTML=html;pidx=-1;
+}
+function openDD(){buildDD(document.getElementById('pair').value);document.getElementById('pairDD').classList.add('open');}
+function closeDD(){document.getElementById('pairDD').classList.remove('open');}
+function filterPairs(){buildDD(document.getElementById('pair').value);document.getElementById('pairDD').classList.add('open');}
+function selPair(v){document.getElementById('pair').value=v;closeDD();}
+function pairKey(e){
+  const opts=document.querySelectorAll('.pair-opt');
+  if(e.key==='ArrowDown'){e.preventDefault();pidx=Math.min(pidx+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('kactive',i===pidx));}
+  else if(e.key==='ArrowUp'){e.preventDefault();pidx=Math.max(pidx-1,0);opts.forEach((o,i)=>o.classList.toggle('kactive',i===pidx));}
+  else if(e.key==='Enter'&&pidx>=0){selPair(flist[pidx]);}
+  else if(e.key==='Escape'){closeDD();}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.pair-wrap'))closeDD();});
+
+function setNow(){
+  const d=new Date();
+  document.getElementById('tradeDate').value=d.toISOString().split('T')[0];
+  document.getElementById('tradeTime').value=d.toTimeString().slice(0,5);
+}
+setNow();
+
+function getRisk(){return parseFloat(document.getElementById('riskPct').value)||3;}
+function calc(){
+  const cap=parseFloat(document.getElementById('capital').value)||0;
+  const risk=getRisk()/100;
+  const lev=parseFloat(document.getElementById('levSlider').value)||1;
+  const tp=parseFloat(document.getElementById('tp').value)||0;
+  const sl=parseFloat(document.getElementById('sl').value)||0;
+  const fee=parseFloat(document.getElementById('fee').value)||0;
+  const riskAmt=cap*risk;
+  const pos=sl>0?(riskAmt/(sl/100)):0;
+  const margin=sl>0?(pos/lev):0;
+  const feeAmt=pos*(fee/100)*2;
+  const pRaw=pos*(tp/100);
+  const lRaw=pos*(sl/100);
+  const pNet=pRaw-feeAmt;
+  const lNet=lRaw+feeAmt;
+  const rr=(sl>0&&tp>0)?(tp/sl):0;
+  document.getElementById('r-pos').textContent=pos>0?pos.toFixed(2):'—';
+  document.getElementById('r-margin').textContent=margin>0?margin.toFixed(2):'0';
+  document.getElementById('r-profit').textContent=pNet>0?'+'+pNet.toFixed(2):'0';
+  document.getElementById('r-profit-raw').textContent=pRaw.toFixed(2);
+  document.getElementById('r-loss').textContent=lNet>0?'-'+lNet.toFixed(2):'0';
+  document.getElementById('r-loss-raw').textContent=lRaw.toFixed(2);
+  document.getElementById('r-rr').textContent=rr>0?rr.toFixed(2)+' : 1':'—';
+  document.getElementById('r-risk-amt').textContent=sl>0?(riskAmt+feeAmt).toFixed(2):'0';
+  document.getElementById('r-tp-set').textContent=tp>0?tp.toFixed(2)+'%':'0.00%';
+  document.getElementById('r-sl-set').textContent=sl>0?sl.toFixed(2)+'%':'0.00%';
+}
+
+function resetForm(){
+  document.getElementById('pair').value='';
+  document.getElementById('capital').value='0';
+  document.getElementById('tp').value='';
+  document.getElementById('sl').value='';
+  document.getElementById('fee').value='0.02';
+  document.getElementById('levSlider').value=10;
+  document.getElementById('levVal').value=10;
+  document.getElementById('riskPct').value='3';
+  setNow();calc();
+}
+
+document.querySelectorAll('#capital,#tp,#sl,#fee').forEach(el=>el.addEventListener('input',calc));
+document.getElementById('riskPct').addEventListener('change',calc);
+calc();
+
+let trades=[];
+function saveTrade(){
+  const pair=document.getElementById('pair').value||'—';
+  const date=document.getElementById('tradeDate').value;
+  const time=document.getElementById('tradeTime').value;
+  const lev=document.getElementById('levSlider').value;
+  const cap=parseFloat(document.getElementById('capital').value)||0;
+  const risk=getRisk()/100;
+  const tp=parseFloat(document.getElementById('tp').value)||0;
+  const sl=parseFloat(document.getElementById('sl').value)||0;
+  const fee=parseFloat(document.getElementById('fee').value)||0;
+  const pos=sl>0?((cap*risk)/(sl/100)):0;
+  const feeAmt=pos*(fee/100)*2;
+  const pNet=(pos*(tp/100)-feeAmt).toFixed(2);
+  const lNet=(pos*(sl/100)+feeAmt).toFixed(2);
+  trades.unshift({id:Date.now(),pair,date,time,lev,pos:pos.toFixed(2),tp,sl,fee,pNet,lNet,status:'pending',result:'-'});
+  renderTrades();
+}
+function setStatus(id,s){const t=trades.find(x=>x.id===id);if(t){t.status=s;t.result=s==='win'?'+'+t.pNet:'-'+t.lNet;}renderTrades();}
+function delTrade(id){trades=trades.filter(x=>x.id!==id);renderTrades();}
+
+function renderTrades(){
+  let pnl=0;
+  trades.forEach(t=>{if(t.status==='win')pnl+=parseFloat(t.pNet);else if(t.status==='loss')pnl-=parseFloat(t.lNet);});
+  const pe=document.getElementById('s-pnl');
+  pe.textContent=pnl.toFixed(2);
+  pe.className='sv'+(pnl>=0?' green':' red');
+  document.getElementById('s-count').textContent=trades.length;
+  drawGraph();
+  const tb=document.getElementById('tradeBody');
+  if(!trades.length){tb.innerHTML='<tr><td colspan="13" class="empty-row">ยังไม่มีรายการเทรด</td></tr>';return;}
+  tb.innerHTML=trades.map(t=>{
+    const bc=t.status==='win'?'sw':t.status==='loss'?'sl2':'sp';
+    const bt=t.status==='win'?'ชนะ':t.status==='loss'?'แพ้':'ค้างอยู่';
+    const rc=t.status==='win'?'color:#16a34a':t.status==='loss'?'color:#dc2626':'color:#888';
+    return `<tr>
+      <td><b>${t.pair}</b></td>
+      <td>${t.date}</td><td>${t.time}</td>
+      <td>${t.lev}x</td><td>${t.pos}</td>
+      <td>${t.tp}%</td><td>${t.sl}%</td><td>${t.fee}%</td>
+      <td style="color:#16a34a">${parseFloat(t.pNet)>0?'+'+t.pNet:t.pNet}</td>
+      <td style="color:#dc2626">-${t.lNet}</td>
+      <td><span class="sbadge ${bc}">${bt}</span></td>
+      <td style="${rc};font-weight:700">${t.result}</td>
+      <td>
+        ${t.status==='pending'?`<button class="abtn aw" onclick="setStatus(${t.id},'win')">ชนะ</button><button class="abtn al" onclick="setStatus(${t.id},'loss')">แพ้</button>`:''}
+        <button class="abtn ad" onclick="delTrade(${t.id})">ลบ</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function drawGraph(){
+  const area=document.getElementById('graphArea');
+  if(!trades.length){area.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:#ccc">กราฟ P&L สะสม</span></div>';return;}
+  let cum=0;const pts=[0];
+  [...trades].reverse().forEach(t=>{
+    if(t.status==='win')cum+=parseFloat(t.pNet);
+    else if(t.status==='loss')cum-=parseFloat(t.lNet);
+    pts.push(cum);
+  });
+  const mn=Math.min(...pts),mx=Math.max(...pts);
+  const range=mx-mn||1;
+  const h=100;
+  const bars=pts.slice(1).map((v,i)=>{
+    const prev=pts[i];
+    const pct=Math.abs(v-prev)/range*80;
+    const col=v>=prev?'#16a34a':'#dc2626';
+    return `<div style="flex:1;background:${col};height:${Math.max(pct,4)}px;border-radius:2px 2px 0 0;min-width:4px;max-width:20px"></div>`;
+  });
+  area.innerHTML=bars.join('');
+}
+
+// dark mode toggle
+let dark=false;
+function toggleMode(){
+  dark=!dark;
+  document.body.style.background=dark?'#0f172a':'#e8edf2';
+  document.querySelectorAll('.card').forEach(c=>{c.style.background=dark?'#1e293b':'';c.style.borderColor=dark?'#334155':'';c.style.color=dark?'#e2e8f0':'';});
+  document.querySelector('.top-header').style.background=dark?'#1e293b':'';
+  document.querySelector('.btn-mode').textContent=dark?'โหมดสว่าง':'โหมดมืด';
+}
+</script>
+<script>
+// ---- Service Worker (Offline Support) ----
+if('serviceWorker' in navigator){
+  const swCode = `
+    const CACHE = 'possizing-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(()=>caches.match('./'))));
+    });
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// ---- Install Banner ----
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{ deferredPrompt=null; hideBanner(); });
+  }
+}
+function hideBanner(){
+  document.getElementById('installBanner').style.display='none';
+  localStorage.setItem('bannerDismissed','1');
+}
+window.addEventListener('appinstalled',()=>{ hideBanner(); });
+</script>
+
+<!-- Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0ea5e9;color:#fff;padding:12px 16px;align-items:center;justify-content:space-between;z-index:9999;box-shadow:0 -2px 12px rgba(0,0,0,.15)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:22px">📲</span>
+    <div>
+      <div style="font-size:13px;font-weight:700">ติดตั้งเป็น App บนมือถือ</div>
+      <div style="font-size:11px;opacity:.85">ใช้งาน offline ได้ · ไม่ต้องเปิดเบราว์เซอร์</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="installApp()" style="background:#fff;color:#0ea5e9;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">ติดตั้ง</button>
+    <button onclick="hideBanner()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:7px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
+  </div>
+</div>
+
+</body>
+</html>
